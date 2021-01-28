@@ -14,7 +14,7 @@
 - 基金信息：serve/data/funds.js
 - 订单信息：serve/data/buys.js
 
-> 在执行 npm run node 的时候，会判断是否有这两个文件，无则新建
+> 在执行 npm run serve 的时候，会判断是否有这两个文件，无则新建
 
 ## 更新记录
 
