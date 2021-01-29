@@ -9,10 +9,4 @@ app.use(express.static('dist'))
 app.use(bodyParser.json())
 
 require('./api')(app)
-
-app.listen(4001, () =>
-  console.log(`
-  App running at:
-  - Local: http://localhost:4001
-`)
-)
+require('./utils').runServe(app, 4000)
