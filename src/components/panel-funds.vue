@@ -1,23 +1,29 @@
 <template lang="pug">
   div
     h1.fx-row.fx-c-center
-      div.fx-1 基金列表
+      div.fx-1
+        span 基金列表 
+        span(style="font-size: 50%")
+          span 今日收益：
+          span(:style="{ color: config[todayIncome > 0 ? 'add' : 'loss'] }") {{ todayIncome }}
       el-button(type="success" icon="el-icon-plus" circle @click="doEdit()")
     el-card(style="width: 100%")
       el-table(:data="list" style="width: 100%")
         el-table-column(prop="code" label="基金代码" width="100")
         el-table-column(prop="name" label="基金名称" width="230")
-        el-table-column(label="昨日基金" width="200")
-          template(slot-scope="scope")
-            span {{ scope.row.baseDate }}
-            span(style="color: red") （{{ scope.row.baseUnit }}）
-        el-table-column(label="实时基金" width="250")
+        el-table-column(label="实时基金" width="230")
           template(slot-scope="scope")
             span {{ scope.row.nowDate }}
-            span(style="color: red") （{{ scope.row.nowUnit }}）
-        el-table-column(label="今日涨幅估算" align="right" width="150")
+            span(style="color: blueviolet") （{{ scope.row.nowUnit }}）
+        el-table-column(label="涨幅估算/今日收益" align="center" width="180")
           template(slot-scope="scope")
-            span(:style="{ color: scope.row.fluctuate > 0 ? 'red' : 'green' }") {{ scope.row.fluctuate }}%
+            span(:style="{ color: config[scope.row.fluctuate > 0 ? 'add' : 'loss'] }") {{ scope.row.fluctuate }}% / 
+            span(:style="{ color: config[scope.row.buys.count.todayIncome > 0 ? 'add' : 'loss'] }") {{ scope.row.buys.count.todayIncome }}
+        el-table-column(label="购买总额/持仓价值/总收益" align="left" width="200")
+          template(slot-scope="scope")
+            span {{ scope.row.buys.count.price }} / 
+            span(:style="{ color: config[scope.row.buys.count.nowPrice > scope.row.buys.count.price ? 'add' : 'loss'] }") {{ scope.row.buys.count.nowPrice }} / 
+            span(:style="{ color: config[scope.row.buys.count.nowIncome > 0 ? 'add' : 'loss'] }") {{ scope.row.buys.count.nowIncome }}
         el-table-column(label="操作" align="right")
           template(slot-scope="scope")
             el-button(type="primary" icon="el-icon-edit" circle size="mini" @click="doEdit(scope.row.config)")
@@ -65,6 +71,7 @@
 import clone from 'lodash/cloneDeep'
 
 import request from '@/utils/request'
+import config from '@/utils/env'
 
 const BASE_FORM = {
   code: '',
@@ -92,11 +99,18 @@ export default {
     funds: {
       type: Array,
       default: () => []
+    },
+
+    buys: {
+      type: Array,
+      default: () => []
     }
   },
 
   data() {
     return {
+      config,
+
       editVisible: false,
       editForm: clone(BASE_FORM),
       editRules: {
@@ -113,7 +127,39 @@ export default {
 
   computed: {
     list() {
-      return this.funds.map((fund) => this.sync[fund.code]).filter(Boolean)
+      return this.funds
+        .map((fund) => this.sync[fund.code])
+        .filter(Boolean)
+        .map((item) => {
+          const res = { ...item }
+
+          const order = this.buys.filter((i) => i.code === item.code)
+          const count = order.reduce(
+            (count, item) => {
+              count.part += item.part
+              count.price += item.price
+              return count
+            },
+            { part: 0, price: 0 }
+          )
+
+          count.todayIncome = +(count.part * (res.nowUnit - res.baseUnit)).toFixed(2)
+          count.nowPrice = +(count.part * res.nowUnit).toFixed(2)
+          count.nowIncome = +(count.nowPrice - count.price).toFixed(2)
+
+          res.buys = { order, count }
+
+          return res
+        })
+    },
+
+    todayIncome() {
+      return +this.list
+        .reduce((sum, i) => {
+          sum += i.buys.count.todayIncome
+          return sum
+        }, 0)
+        .toFixed(2)
     }
   },
 

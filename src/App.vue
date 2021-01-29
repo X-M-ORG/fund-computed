@@ -1,7 +1,7 @@
 <template lang="pug">
   #app
-    panel-funds(:sync="realTime" :funds="funds")
-    panel-buys(:sync="realTime" :buys="buys")
+    panel-funds(:sync="realTime" :funds="funds" :buys="buys")
+    panel-buys(:sync="realTime" :funds="funds" :buys="buys")
 </template>
 
 <script>

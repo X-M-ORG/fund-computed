@@ -7,20 +7,18 @@
       el-table(:data="list" style="width: 100%")
         el-table-column(prop="fund.code" label="基金代码" width="100")
         el-table-column(prop="fund.name" label="基金名称" width="230")
-        el-table-column(prop="buy.date" label="确认日期" width="110")
-        el-table-column(prop="buy.unit" label="确认单价" width="80")
-        el-table-column(prop="buy.part" label="确认份数" width="80")
         el-table-column(prop="buy.price" label="订单金额" width="80")
-        el-table-column( label="当前价值" align="center" width="80")
-          template(slot-scope="scope")
-            span(:style="{ color: scope.row.nowPrice > scope.row.buy.price ? 'red' : 'green' }") {{ scope.row.nowPrice }}
         el-table-column(prop="hasDay" label="持有天数" align="center" width="80")
-        el-table-column( label="赎回所得" align="center" width="80")
+        el-table-column( label="确认日期/单价/份数" align="left" width="250")
           template(slot-scope="scope")
-            span(:style="{ color: scope.row.sellPrice > scope.row.buy.price ? 'red' : 'green' }") {{ scope.row.sellPrice }}
-        el-table-column( label="收益率" align="right" width="80")
+            span {{ scope.row.buy.date }} / 
+            span {{ scope.row.buy.unit }} / 
+            span {{ scope.row.buy.part }}
+        el-table-column( label="当前价值/赎回所得/收益比" align="left" width="200")
           template(slot-scope="scope")
-            span(:style="{ color: scope.row.fluctuate > 0 ? 'red' : 'green' }") {{ scope.row.fluctuate }}%
+            span(:style="{ color: config[scope.row.nowPrice > scope.row.buy.price ? 'add' : 'loss'] }") {{ scope.row.nowPrice }} / 
+            span(:style="{ color: config[scope.row.sellPrice > scope.row.buy.price ? 'add' : 'loss'] }") {{ scope.row.sellPrice }} / 
+            span(:style="{ color: config[scope.row.fluctuate > 0 ? 'add' : 'loss'] }") {{ scope.row.fluctuate }}%
         el-table-column(label="操作" align="right")
           template(slot-scope="scope")
             el-button(type="primary" icon="el-icon-edit" circle size="mini" @click="doEdit(scope.$index)")
@@ -56,6 +54,7 @@
 import clone from 'lodash/cloneDeep'
 
 import request from '@/utils/request'
+import config from '@/utils/env'
 
 const ONE_DAY = 24 * 60 * 60 * 1000
 const BASE_FORM = {
@@ -73,6 +72,11 @@ export default {
       default: () => ({})
     },
 
+    funds: {
+      type: Array,
+      default: () => []
+    },
+
     buys: {
       type: Array,
       default: () => []
@@ -81,6 +85,8 @@ export default {
 
   data() {
     return {
+      config,
+
       editVisible: false,
       editIndex: -1,
       editForm: clone(BASE_FORM),
