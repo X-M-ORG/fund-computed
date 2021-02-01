@@ -69,6 +69,10 @@ export default {
         return next
           .then(() => this.$jsonp(`http://fundgz.1234567.com.cn/js/${fund.code}.js`, { callbackName: 'jsonpgz', myCustomUrlParam: Math.random() }))
           .then((data) => {
+            if (this.realTime[data.fundcode] && new Date(data.gztime) <= new Date(this.realTime[data.fundcode].nowDate)) {
+              return
+            }
+
             this.$set(this.realTime, data.fundcode, {
               config: fund,
               code: data.fundcode, // 基金代码
